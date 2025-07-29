@@ -1,6 +1,6 @@
-# BookAI - Open WebUI Integration
+# BookAI - AI Chat Application with Vertex AI
 
-BookAI is a web implementation integrating Open WebUI capabilities with Google Cloud/Vertex AI and Supabase for book-related AI assistance.
+BookAI is a custom web application that provides a chat interface powered by Google Cloud Vertex AI (Gemini 2.0 Flash) with Supabase for data persistence. While inspired by Open WebUI's features, this is a completely custom implementation built with Node.js/Express.
 
 ## Project Structure
 
@@ -31,10 +31,12 @@ BookAI/
 
 ## Technology Stack
 
-- **Frontend**: Open WebUI interface
-- **Backend**: Node.js/Express with Open WebUI integration
-- **Database**: Supabase (PostgreSQL)
+- **Frontend**: Custom HTML/CSS/JavaScript with real-time chat interface
+- **Backend**: Node.js/Express REST API
+- **Database**: Supabase (PostgreSQL) 
 - **AI Model**: Google Cloud Vertex AI (Gemini 2.0 Flash)
+- **Real-time**: Socket.io for WebSocket support
+- **Session**: Redis for session management
 - **Deployment**: Docker containerization
 
 ## Development

@@ -3,14 +3,17 @@ version: '3.8'
 services:
   bookai-webui:
     build: .
-    container_name: bookai-openwebui
+    container_name: bookai-app
     ports:
       - "3000:8080"
     volumes:
-      - bookai_data:/app/backend/data
+      - bookai_data:/app/data
       - ./config:/app/config
       - ./.env:/app/.env
+      - ./logs:/app/logs
     environment:
+      - NODE_ENV=production
+      - PORT=8080
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-here}
       - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/bookai
       - SUPABASE_URL=${SUPABASE_URL}
@@ -19,7 +22,8 @@ services:
       - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/config/service-account-key.json
       - AI_MODEL=${AI_MODEL}
-      - GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI}
+      - REDIS_URL=redis://redis:6379
+      - SESSION_SECRET=${SESSION_SECRET}
     depends_on:
       - postgres
       - redis
