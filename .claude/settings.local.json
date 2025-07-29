@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(gh issue create:*)",
+      "Bash(winget install:*)",
+      "Bash(gh auth:*)",
+      "Bash(refreshenv)",
+      "Bash(dir \"C:\\Program Files\\GitHub CLI\" /s)",
+      "Bash(setx:*)",
+      "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" auth login)",
+      "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" issue create --repo open-webui/open-webui --title \"Create web with open-webui\" --body \"Request to create web implementation with open-webui\")",
+      "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" issue create --title \"Create web with open-webui\" --body \"Request to create web implementation with open-webui\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": []
+  }
+}
