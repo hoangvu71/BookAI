@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  bookai-webui:
+    build: .
+    container_name: bookai-openwebui
+    ports:
+      - "3000:8080"
+    volumes:
+      - bookai_data:/app/backend/data
+      - ./config:/app/config
+      - ./.env:/app/.env
+    environment:
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-here}
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/bookai
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/config/service-account-key.json
+      - AI_MODEL=${AI_MODEL}
+      - GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI}
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - bookai-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: bookai-postgres
+    environment:
+      - POSTGRES_DB=bookai
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-bookai_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - bookai-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: bookai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - bookai-network
+
+  # Optional: Vector database for RAG functionality
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: bookai-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    restart: unless-stopped
+    networks:
+      - bookai-network
+
+volumes:
+  bookai_data:
+  postgres_data:
+  redis_data:
+  chroma_data:
+
+networks:
+  bookai-network:
+    driver: bridge
