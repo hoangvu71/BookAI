@@ -1,52 +1,78 @@
-# BookAI - Open WebUI Integration
+# BookAI - Open WebUI with Google Vertex AI
 
-BookAI is a web implementation integrating Open WebUI capabilities with Google Cloud/Vertex AI and Supabase for book-related AI assistance.
+BookAI provides a self-hosted AI chat interface using Open WebUI connected to Google Vertex AI (Gemini 2.0 Flash) through a custom OpenAI-compatible adapter.
 
-## Project Structure
+## Overview
+
+This project enables you to:
+- Use Open WebUI's feature-rich interface
+- Connect to Google Vertex AI instead of OpenAI
+- Maintain data privacy with self-hosted deployment
+- Access Gemini 2.0 Flash's capabilities through a familiar interface
+
+## Architecture
 
 ```
-BookAI/
-├── backend/                 # Backend API and services
-│   ├── api/                # REST API endpoints
-│   ├── models/             # Data models
-│   └── middleware/         # Express middleware
-├── frontend/               # Frontend assets and components
-│   ├── assets/            # Static assets (images, fonts)
-│   ├── styles/            # CSS/SCSS stylesheets
-│   └── public/            # Public files
-├── src/                   # Main application source
-│   ├── components/        # Reusable UI components
-│   ├── pages/            # Page components
-│   ├── services/         # API services and utilities
-│   └── utils/            # Helper functions
-├── config/               # Configuration files
-├── docs/                # Documentation
-├── tests/               # Test files
-│   ├── unit/           # Unit tests
-│   └── integration/    # Integration tests
-├── scripts/            # Build and deployment scripts
-├── .env               # Environment variables
-└── CLAUDE.md         # Development guidelines
+Open WebUI (Frontend) → Vertex AI Adapter → Google Vertex AI
 ```
 
-## Technology Stack
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation.
 
-- **Frontend**: Open WebUI interface
-- **Backend**: Node.js/Express with Open WebUI integration
-- **Database**: Supabase (PostgreSQL)
-- **AI Model**: Google Cloud Vertex AI (Gemini 2.0 Flash)
-- **Deployment**: Docker containerization
+## Quick Start
+
+### Prerequisites
+- Docker and Docker Compose
+- Google Cloud Project with Vertex AI enabled
+- Service account key with Vertex AI permissions
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/hoangvu71/BookAI.git
+cd BookAI
+```
+
+2. Configure environment:
+```bash
+cp .env.template .env
+# Edit .env with your Google Cloud settings
+```
+
+3. Add your Google Cloud service account key:
+```bash
+cp /path/to/your/service-account-key.json config/service-account-key.json
+```
+
+4. Start the services:
+```bash
+docker-compose up -d
+```
+
+5. Access Open WebUI at http://localhost:3000
+
+## Features
+
+All Open WebUI features are available:
+- 🤖 Modern chat interface
+- 📚 Document chat with RAG
+- 🔍 Web search integration
+- 👥 Multi-user support
+- 🎨 Image generation support
+- 📱 Mobile-friendly PWA
+- 🌐 Multilingual interface
+
+## Configuration
+
+Key environment variables in `.env`:
+- `GOOGLE_CLOUD_PROJECT` - Your GCP project ID
+- `GOOGLE_CLOUD_LOCATION` - Vertex AI location (e.g., us-central1)
+- `AI_MODEL` - Model to use (default: gemini-2.0-flash-exp)
 
 ## Development
 
-See [CLAUDE.md](./CLAUDE.md) for detailed development guidelines and GitHub workflow integration.
+See [CLAUDE.md](./CLAUDE.md) for development guidelines.
 
-## Current Status
+## License
 
-🚧 **Phase 1: Foundation Setup** - In Progress
-- [x] Project structure created
-- [ ] Docker configuration
-- [ ] Environment integration
-- [ ] Database setup
-
-See [GitHub Issues](https://github.com/hoangvu71/BookAI/issues) for detailed progress tracking.
+MIT License - See LICENSE file for details.

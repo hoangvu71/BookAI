@@ -1,79 +1,77 @@
 version: '3.8'
 
 services:
-  bookai-webui:
-    build: .
-    container_name: bookai-openwebui
+  # Open WebUI - Using official image
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: bookai-webui
     ports:
       - "3000:8080"
     volumes:
-      - bookai_data:/app/backend/data
-      - ./config:/app/config
-      - ./.env:/app/.env
+      - open-webui-data:/app/backend/data
     environment:
+      # Connect to our Vertex AI adapter instead of OpenAI
+      - OPENAI_API_BASE_URL=http://vertex-adapter:8000/v1
+      - OPENAI_API_KEY=dummy-key-for-vertex
+      
+      # Open WebUI configuration
+      - WEBUI_NAME=BookAI
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-here}
-      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@postgres:5432/bookai
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-true}
+      
+      # Database (Open WebUI manages its own SQLite by default)
+      # For production, you can configure PostgreSQL here
+      
+      # Optional features
+      - ENABLE_RAG=${ENABLE_RAG:-true}
+      - ENABLE_WEB_SEARCH=${ENABLE_WEB_SEARCH:-false}
+    depends_on:
+      - vertex-adapter
+    restart: unless-stopped
+    networks:
+      - bookai-network
+
+  # Vertex AI Adapter - Our custom service
+  vertex-adapter:
+    build: ./vertex-adapter
+    container_name: bookai-vertex-adapter
+    ports:
+      - "8000:8000"  # Expose for debugging, not needed in production
+    volumes:
+      - ./config:/app/config:ro
+    environment:
+      # Google Cloud Configuration
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
       - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/config/service-account-key.json
-      - AI_MODEL=${AI_MODEL}
-      - GOOGLE_GENAI_USE_VERTEXAI=${GOOGLE_GENAI_USE_VERTEXAI}
-    depends_on:
-      - postgres
-      - redis
+      
+      # Model Configuration
+      - AI_MODEL=${AI_MODEL:-gemini-2.0-flash-exp}
+      
+      # Adapter Configuration
+      - PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     restart: unless-stopped
     networks:
       - bookai-network
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: bookai-postgres
-    environment:
-      - POSTGRES_DB=bookai
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-bookai_password}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-    networks:
-      - bookai-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: bookai-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    networks:
-      - bookai-network
-
-  # Optional: Vector database for RAG functionality
-  chromadb:
-    image: chromadb/chroma:latest
-    container_name: bookai-chromadb
-    ports:
-      - "8000:8000"
-    volumes:
-      - chroma_data:/chroma/chroma
-    environment:
-      - CHROMA_SERVER_HOST=0.0.0.0
-      - CHROMA_SERVER_HTTP_PORT=8000
-    restart: unless-stopped
-    networks:
-      - bookai-network
+  # Optional: PostgreSQL for Open WebUI (instead of SQLite)
+  # Uncomment if you want to use PostgreSQL
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: bookai-postgres
+  #   environment:
+  #     - POSTGRES_DB=openwebui
+  #     - POSTGRES_USER=openwebui
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-openwebui}
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - bookai-network
 
 volumes:
-  bookai_data:
-  postgres_data:
-  redis_data:
-  chroma_data:
+  open-webui-data:
+  # postgres-data:  # Uncomment if using PostgreSQL
 
 networks:
   bookai-network:
