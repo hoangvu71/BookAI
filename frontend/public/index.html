@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookAI - Open WebUI Chat</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>BookAI Chat</h1>
+            <div class="model-info">
+                <span id="model-name">Loading...</span>
+                <button id="test-connection" class="btn-secondary">Test Connection</button>
+            </div>
+        </header>
+
+        <div class="chat-container">
+            <div class="sidebar">
+                <button id="new-chat" class="btn-primary">New Chat</button>
+                <div id="chat-list" class="chat-list">
+                    <!-- Chat sessions will be listed here -->
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div id="messages" class="messages">
+                    <div class="welcome-message">
+                        <h2>Welcome to BookAI</h2>
+                        <p>Powered by Google Vertex AI - Gemini 2.0 Flash</p>
+                        <p>Start a conversation or create a new chat to begin.</p>
+                    </div>
+                </div>
+
+                <div class="input-container">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="Type your message here..."
+                        rows="3"
+                        disabled
+                    ></textarea>
+                    <div class="input-actions">
+                        <label class="stream-toggle">
+                            <input type="checkbox" id="stream-mode" checked>
+                            <span>Stream responses</span>
+                        </label>
+                        <button id="send-button" class="btn-primary" disabled>Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/chat.js"></script>
+</body>
+</html>
