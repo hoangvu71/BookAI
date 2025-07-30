@@ -1,5 +1,6 @@
 // Google Vertex AI Service
 const { VertexAI } = require('@google-cloud/vertexai');
+const OpenWebUIService = require('./openwebui');
 
 class VertexAIService {
   constructor() {
@@ -39,6 +40,9 @@ class VertexAIService {
         },
       ],
     });
+
+    // Initialize Open WebUI service for custom model configurations
+    this.openWebUIService = new OpenWebUIService();
 
     global.logger?.info('VertexAI service initialized', {
       project: process.env.GOOGLE_CLOUD_PROJECT,
@@ -103,11 +107,28 @@ class VertexAIService {
     try {
       const { messages, stream = false, model, ...otherParams } = openaiRequest;
       
-      // Convert messages to Vertex AI format
-      const vertexMessages = this.convertMessages(messages);
+      // Get the appropriate model and configuration
+      const { modelInstance, modelId, modelConfig } = await this.getModelForRequest(model);
       
-      // Get the appropriate model and chat session
-      const { modelInstance, modelId } = this.getModelForRequest(model);
+      // Apply custom model configuration to messages
+      const enhancedMessages = await this.openWebUIService.applyCustomModelConfig(messages, modelConfig);
+      
+      // Convert messages to Vertex AI format
+      const vertexMessages = this.convertMessages(enhancedMessages);
+      
+      // Debug: Log the actual messages being sent when using custom models
+      if (modelConfig) {
+        global.logger?.info('Messages being sent to Vertex AI for custom model', {
+          modelId,
+          messageCount: enhancedMessages.length,
+          messages: enhancedMessages.map(msg => ({
+            role: msg.role,
+            contentLength: msg.content.length,
+            contentPreview: msg.content.substring(0, 200) + '...'
+          }))
+        });
+      }
+      
       const chat = modelInstance.startChat({
         history: vertexMessages.slice(0, -1) // All but the last message
       });
@@ -127,25 +148,40 @@ class VertexAIService {
   }
 
   // Get model instance for a request (handles custom models)
-  getModelForRequest(requestedModel) {
+  async getModelForRequest(requestedModel) {
     // If no model specified, use default
     if (!requestedModel) {
-      return { modelInstance: this.model, modelId: this.modelId };
+      return { modelInstance: this.model, modelId: this.modelId, modelConfig: null };
     }
 
     // If it's our default model, use the existing instance
     if (requestedModel === this.modelId) {
-      return { modelInstance: this.model, modelId: this.modelId };
+      return { modelInstance: this.model, modelId: this.modelId, modelConfig: null };
     }
 
-    // For custom models, we'll use the default Vertex AI model but apply custom prompting
-    // This allows Open WebUI's custom models to work through prompt engineering
-    global.logger?.info('Using custom model with default Vertex AI backend', { 
+    // For custom models, fetch configuration from Open WebUI
+    global.logger?.info('Processing custom model request', { 
       requestedModel, 
       backendModel: this.modelId 
     });
+
+    // Try to get custom model configuration
+    const modelConfig = await this.openWebUIService.getModelConfig(requestedModel);
     
-    return { modelInstance: this.model, modelId: requestedModel };
+    if (modelConfig) {
+      global.logger?.info('Custom model configuration loaded', { 
+        modelId: requestedModel,
+        hasSystemPrompt: !!this.openWebUIService.extractSystemPrompt(modelConfig),
+        hasKnowledge: !!this.openWebUIService.extractKnowledgeConfig(modelConfig)
+      });
+    } else {
+      global.logger?.info('Using custom model without configuration', { 
+        requestedModel, 
+        backendModel: this.modelId 
+      });
+    }
+    
+    return { modelInstance: this.model, modelId: requestedModel, modelConfig };
   }
 
   // Generate non-streaming response

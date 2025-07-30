@@ -3,10 +3,15 @@ const express = require('express');
 const router = express.Router();
 const vertexAI = require('../services/vertexai');
 const knowledgeBase = require('../services/knowledgebase');
+const OrchestrationMiddleware = require('../middleware/orchestration');
 
 // POST /v1/chat/completions
 router.post('/completions', async (req, res) => {
   try {
+    // Apply orchestration middleware (clean, minimal integration)
+    const orchestration = new OrchestrationMiddleware();
+    req = await orchestration.enhanceRequest(req);
+    
     const { messages, stream = false, model, ...otherParams } = req.body;
 
     // Validate required fields

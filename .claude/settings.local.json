@@ -37,7 +37,19 @@
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
       "Bash(gh issue close:*)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:google.github.io)",
+      "Bash(git clone:*)",
+      "Bash(python test:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker image rm:*)",
+      "Bash(gh api:*)",
+      "Bash(gh pr list:*)",
+      "Bash(docker cp:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)"
     ],
     "deny": []
   }
