@@ -73,9 +73,13 @@ router.post('/completions', async (req, res) => {
           const kbResult = await knowledgeBase.processMessage(userMessage, fullContent);
           
           if (kbResult.shouldSave) {
-            const confirmationMessage = kbResult.saveResult.success 
-              ? `✅ Saved to ${kbResult.authorInfo.collection} collection`
-              : `❌ ${kbResult.saveResult.message}`;
+            let confirmationMessage;
+            if (kbResult.saveResult.success) {
+              const action = kbResult.saveResult.wasAppended ? '📝 Appended to existing file in' : '✅ Saved to';
+              confirmationMessage = `${action} ${kbResult.authorInfo.collection} collection`;
+            } else {
+              confirmationMessage = `❌ ${kbResult.saveResult.message}`;
+            }
             
             // Send confirmation as additional chunk
             const confirmationChunk = {
@@ -151,9 +155,13 @@ router.post('/completions', async (req, res) => {
         const kbResult = await knowledgeBase.processMessage(userMessage, modelResponse);
         
         if (kbResult.shouldSave) {
-          const confirmationMessage = kbResult.saveResult.success 
-            ? `✅ Saved to ${kbResult.authorInfo.collection} collection`
-            : `❌ ${kbResult.saveResult.message}`;
+          let confirmationMessage;
+          if (kbResult.saveResult.success) {
+            const action = kbResult.saveResult.wasAppended ? '📝 Appended to existing file in' : '✅ Saved to';
+            confirmationMessage = `${action} ${kbResult.authorInfo.collection} collection`;
+          } else {
+            confirmationMessage = `❌ ${kbResult.saveResult.message}`;
+          }
           
           // Add confirmation to response
           result.choices[0].message.content += `\n\n${confirmationMessage}`;

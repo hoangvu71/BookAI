@@ -130,9 +130,11 @@ BookAI includes automatic knowledge base integration for author generation. When
    - Creates a properly formatted filename (e.g., "History Sci-fi Author Profile.txt")
 
 3. **Knowledge Base Storage**: 
-   - Uploads the content as a text file to Open WebUI
-   - Automatically adds it to the specified knowledge collection
-   - Provides user feedback via confirmation messages
+   - Checks if a file with the same name already exists in the collection
+   - If file exists: Downloads existing content, appends new content with separator (`---`), uploads updated file
+   - If file doesn't exist: Creates new file with the generated content
+   - Automatically adds/updates it in the specified knowledge collection
+   - Provides user feedback via confirmation messages (✅ Saved / 📝 Appended)
 
 ### Configuration
 
@@ -153,14 +155,23 @@ When you send a message like:
 
 The system will:
 1. Generate an author profile using Vertex AI
-2. Save it as "History Sci-fi Author Profile.txt"
-3. Add it to the "Authors" knowledge collection
-4. Display a confirmation message: "✅ Saved to Authors collection"
+2. Check if "History Sci-fi Author Profile.txt" already exists in the Authors collection
+3. If exists: Append the new content to existing file with a separator
+4. If new: Create "History Sci-fi Author Profile.txt" 
+5. Add/update it in the "Authors" knowledge collection
+6. Display a confirmation message: 
+   - "✅ Saved to Authors collection" (new file)
+   - "📝 Appended to existing file in Authors collection" (existing file)
 
 ### Implementation Details
 
 - **Location**: `vertex-adapter/src/services/knowledgebase.js`
 - **Integration Point**: Chat completions endpoint (both streaming and non-streaming)
+- **File Management**: 
+  - Detects existing files by filename within target collection
+  - Retrieves existing file content via Open WebUI API
+  - Appends new content with `---` separator for readability
+  - Removes old file and uploads updated version to maintain collection integrity
 - **Error Handling**: Graceful fallback if knowledge base operations fail
 - **Collection Management**: Automatically finds existing collections or uses the first available one
 

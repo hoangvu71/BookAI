@@ -133,6 +133,110 @@ class KnowledgeBaseService {
   }
 
   /**
+   * Find existing file in knowledge collection by filename
+   */
+  async findExistingFile(knowledgeCollection, filename) {
+    try {
+      const response = await axios.get(`${this.openWebUIBaseURL}/api/v1/knowledge/${knowledgeCollection.id}`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const collectionData = response.data;
+      if (!collectionData.files) {
+        return null;
+      }
+      
+      // Find file with matching name
+      const existingFile = collectionData.files.find(file => 
+        file.meta.name === filename
+      );
+      
+      if (existingFile) {
+        global.logger?.info('Found existing file', {
+          filename,
+          fileId: existingFile.id,
+          size: existingFile.meta.size
+        });
+        return existingFile;
+      }
+      
+      return null;
+    } catch (error) {
+      global.logger?.error('Failed to find existing file:', {
+        message: error.message,
+        status: error.response?.status,
+        filename
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Get file content by file ID
+   */
+  async getFileContent(fileId) {
+    try {
+      const response = await axios.get(`${this.openWebUIBaseURL}/api/v1/files/${fileId}/content`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`
+        }
+      });
+      
+      return response.data;
+    } catch (error) {
+      global.logger?.error('Failed to get file content:', {
+        message: error.message,
+        status: error.response?.status,
+        fileId
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Remove file from knowledge collection
+   */
+  async removeFileFromKnowledge(knowledgeId, fileId) {
+    try {
+      const response = await axios.post(
+        `${this.openWebUIBaseURL}/api/v1/knowledge/${knowledgeId}/file/remove`,
+        { file_id: fileId },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      return { success: true, data: response.data };
+    } catch (error) {
+      global.logger?.error('Failed to remove file from knowledge collection:', {
+        message: error.message,
+        status: error.response?.status,
+        knowledgeId,
+        fileId
+      });
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Append new content to existing content with proper formatting
+   */
+  appendContent(existingContent, newContent) {
+    // Clean up existing content (remove any trailing whitespace)
+    const cleanExisting = existingContent.trim();
+    const cleanNew = newContent.trim();
+    
+    // Add separator and new content
+    return `${cleanExisting}\n\n---\n\n${cleanNew}`;
+  }
+
+  /**
    * Add file to knowledge collection
    */
   async addFileToKnowledge(knowledgeId, fileId) {
@@ -174,21 +278,51 @@ class KnowledgeBaseService {
         };
       }
 
-      // Step 2: Create temporary file
+      const filename = `${title}.txt`;
+      let finalContent = content;
+      let existingFile = null;
+
+      // Step 2: Check if file already exists
+      existingFile = await this.findExistingFile(knowledgeCollection, filename);
+      
+      if (existingFile) {
+        global.logger?.info('File exists, preparing to append content', {
+          filename,
+          existingFileId: existingFile.id
+        });
+        
+        // Get existing content
+        const existingContent = await this.getFileContent(existingFile.id);
+        if (existingContent) {
+          // Append new content to existing content
+          finalContent = this.appendContent(existingContent, content);
+          global.logger?.info('Content appended', {
+            originalLength: existingContent.length,
+            newLength: finalContent.length
+          });
+          
+          // Remove existing file from collection (we'll upload a new version)
+          await this.removeFileFromKnowledge(knowledgeCollection.id, existingFile.id);
+        }
+      }
+
+      // Step 3: Create temporary file with final content
       const tempFilename = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.txt`;
       const tempPath = path.join(os.tmpdir(), tempFilename);
       
-      await writeFile(tempPath, content, 'utf8');
+      await writeFile(tempPath, finalContent, 'utf8');
       
-      // Step 3: Upload file to Open WebUI
+      // Step 4: Upload file to Open WebUI
       const formData = new FormData();
       const fileStream = fs.createReadStream(tempPath);
-      formData.append('file', fileStream, `${title}.txt`);
+      formData.append('file', fileStream, filename);
       
-      global.logger?.info('Attempting to upload file to Open WebUI', {
+      const action = existingFile ? 'Appending to existing file' : 'Creating new file';
+      global.logger?.info(`${action} in Open WebUI`, {
         url: `${this.openWebUIBaseURL}/api/v1/files/`,
-        filename: `${title}.txt`,
-        targetCollection: knowledgeCollection.name
+        filename,
+        targetCollection: knowledgeCollection.name,
+        contentLength: finalContent.length
       });
       
       const headers = {
@@ -218,22 +352,25 @@ class KnowledgeBaseService {
           title
         });
         
-        // Step 4: Add file to knowledge collection
+        // Step 5: Add file to knowledge collection
         const addResult = await this.addFileToKnowledge(knowledgeCollection.id, fileId);
         
         if (addResult.success) {
+          const actionMessage = existingFile ? 'appended to existing file in' : 'saved to';
           global.logger?.info('File added to knowledge collection successfully', {
             fileId,
             title,
             collection: knowledgeCollection.name,
-            knowledgeId: knowledgeCollection.id
+            knowledgeId: knowledgeCollection.id,
+            wasAppended: !!existingFile
           });
           
           return {
             success: true,
             fileId,
             knowledgeId: knowledgeCollection.id,
-            message: `Saved to ${knowledgeCollection.name} collection`
+            message: `Content ${actionMessage} ${knowledgeCollection.name} collection`,
+            wasAppended: !!existingFile
           };
         } else {
           global.logger?.error('Failed to add file to knowledge collection', addResult);
