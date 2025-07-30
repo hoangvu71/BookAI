@@ -62,10 +62,40 @@ class VertexAIService {
 
   // Convert OpenAI messages to Vertex AI format
   convertMessages(openaiMessages) {
-    return openaiMessages.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : msg.role,
-      parts: [{ text: msg.content }]
-    }));
+    const vertexMessages = [];
+    let systemMessage = '';
+    
+    // First pass: extract system messages and combine them
+    for (const msg of openaiMessages) {
+      if (msg.role === 'system') {
+        systemMessage += (systemMessage ? '\n\n' : '') + msg.content;
+      }
+    }
+    
+    // Second pass: convert non-system messages and prepend system content to first user message
+    let firstUserMessage = true;
+    for (const msg of openaiMessages) {
+      if (msg.role === 'system') {
+        continue; // Skip system messages as they're handled separately
+      }
+      
+      let content = msg.content;
+      
+      // If this is the first user message and we have system instructions, prepend them
+      if (msg.role === 'user' && firstUserMessage && systemMessage) {
+        content = `${systemMessage}\n\n${content}`;
+        firstUserMessage = false;
+      } else if (msg.role === 'user') {
+        firstUserMessage = false;
+      }
+      
+      vertexMessages.push({
+        role: msg.role === 'assistant' ? 'model' : msg.role,
+        parts: [{ text: content }]
+      });
+    }
+    
+    return vertexMessages;
   }
 
   // Convert OpenAI chat completion request to Vertex AI
