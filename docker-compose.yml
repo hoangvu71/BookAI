@@ -39,6 +39,8 @@ services:
       - "8000:8000"  # Expose for debugging, not needed in production
     volumes:
       - ./config:/app/config:ro
+    env_file:
+      - .env
     environment:
       # Google Cloud Configuration
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
@@ -51,6 +53,10 @@ services:
       # Adapter Configuration
       - PORT=8000
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      
+      # Knowledge Base Configuration
+      - OPENWEBUI_API_BASE=http://open-webui:8080
+      - OPENWEBUI_API_KEY=sk-18b7a0c99fba4fb4b42309d89cedc864
     restart: unless-stopped
     networks:
       - bookai-network

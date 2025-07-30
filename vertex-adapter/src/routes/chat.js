@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const vertexAI = require('../services/vertexai');
+const knowledgeBase = require('../services/knowledgebase');
 
 // POST /v1/chat/completions
 router.post('/completions', async (req, res) => {
@@ -40,25 +41,64 @@ router.post('/completions', async (req, res) => {
         
         let fullContent = '';
         for await (const chunk of streamResult) {
-          const chunkText = chunk.text();
-          fullContent += chunkText;
-          
-          // Format as OpenAI streaming response
-          const streamChunk = {
-            id: `chatcmpl-${Date.now()}`,
-            object: 'chat.completion.chunk',
-            created: Math.floor(Date.now() / 1000),
-            model: model || vertexAI.modelId,
-            choices: [{
-              index: 0,
-              delta: {
-                content: chunkText
-              },
-              finish_reason: null
-            }]
-          };
+          try {
+            const chunkText = chunk.text();
+            fullContent += chunkText;
+            
+            // Format as OpenAI streaming response
+            const streamChunk = {
+              id: `chatcmpl-${Date.now()}`,
+              object: 'chat.completion.chunk',
+              created: Math.floor(Date.now() / 1000),
+              model: model || vertexAI.modelId,
+              choices: [{
+                index: 0,
+                delta: {
+                  content: chunkText
+                },
+                finish_reason: null
+              }]
+            };
 
-          res.write(`data: ${JSON.stringify(streamChunk)}\n\n`);
+            res.write(`data: ${JSON.stringify(streamChunk)}\n\n`);
+          } catch (chunkError) {
+            global.logger?.error('Error processing streaming chunk:', chunkError);
+            // Continue with next chunk
+          }
+        }
+        
+        // Check if we should save to knowledge base BEFORE ending response
+        try {
+          const userMessage = messages[messages.length - 1]?.content || '';
+          const kbResult = await knowledgeBase.processMessage(userMessage, fullContent);
+          
+          if (kbResult.shouldSave) {
+            const confirmationMessage = kbResult.saveResult.success 
+              ? `✅ Saved to ${kbResult.authorInfo.collection} collection`
+              : `❌ ${kbResult.saveResult.message}`;
+            
+            // Send confirmation as additional chunk
+            const confirmationChunk = {
+              id: `chatcmpl-${Date.now()}`,
+              object: 'chat.completion.chunk',
+              created: Math.floor(Date.now() / 1000),
+              model: model || vertexAI.modelId,
+              choices: [{
+                index: 0,
+                delta: {
+                  content: `\n\n${confirmationMessage}`
+                },
+                finish_reason: null
+              }]
+            };
+            
+            res.write(`data: ${JSON.stringify(confirmationChunk)}\n\n`);
+          }
+        } catch (kbError) {
+          global.logger?.error('Knowledge base processing error:', {
+            message: kbError.message
+          });
+          // Continue without KB functionality
         }
 
         // Send final chunk with finish_reason
@@ -103,6 +143,27 @@ router.post('/completions', async (req, res) => {
       global.logger?.info('Chat completion successful', {
         responseLength: result.choices[0]?.message?.content?.length || 0
       });
+
+      // Check if we should save to knowledge base
+      try {
+        const userMessage = messages[messages.length - 1]?.content || '';
+        const modelResponse = result.choices[0]?.message?.content || '';
+        const kbResult = await knowledgeBase.processMessage(userMessage, modelResponse);
+        
+        if (kbResult.shouldSave) {
+          const confirmationMessage = kbResult.saveResult.success 
+            ? `✅ Saved to ${kbResult.authorInfo.collection} collection`
+            : `❌ ${kbResult.saveResult.message}`;
+          
+          // Add confirmation to response
+          result.choices[0].message.content += `\n\n${confirmationMessage}`;
+        }
+      } catch (kbError) {
+        global.logger?.error('Knowledge base processing error:', {
+          message: kbError.message
+        });
+        // Continue without KB functionality
+      }
       
       res.json(result);
     }

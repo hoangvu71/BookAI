@@ -82,6 +82,10 @@ GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_CLOUD_LOCATION=us-central1
 GOOGLE_APPLICATION_CREDENTIALS=/app/config/service-account-key.json
 AI_MODEL=gemini-2.0-flash-exp
+
+# Knowledge Base Integration
+OPENWEBUI_API_BASE=http://open-webui:8080
+OPENWEBUI_API_KEY=your-openwebui-api-key
 ```
 
 ## Best Practices
@@ -108,6 +112,57 @@ AI_MODEL=gemini-2.0-flash-exp
 - Not all OpenAI features exist in Vertex AI
 - Document limitations clearly
 - Provide graceful fallbacks
+
+## Knowledge Base Integration
+
+BookAI includes automatic knowledge base integration for author generation. When using custom models, the system can automatically detect author creation requests and save the generated content to Open WebUI's Knowledge Base.
+
+### How It Works
+
+1. **Pattern Detection**: The adapter detects messages containing author creation patterns:
+   - "Create author for the [genre] genre for the [collection] collection"
+   - "Generate [genre] author for [collection]"
+   - "Make [genre] author for [collection]"
+
+2. **Content Processing**: When a pattern is detected:
+   - Extracts genre and target collection from the user message
+   - Processes the AI-generated author profile
+   - Creates a properly formatted filename (e.g., "History Sci-fi Author Profile.txt")
+
+3. **Knowledge Base Storage**: 
+   - Uploads the content as a text file to Open WebUI
+   - Automatically adds it to the specified knowledge collection
+   - Provides user feedback via confirmation messages
+
+### Configuration
+
+Ensure these environment variables are set for knowledge base integration:
+
+```env
+# Knowledge Base API Configuration
+OPENWEBUI_API_BASE=http://open-webui:8080
+OPENWEBUI_API_KEY=your-openwebui-api-key
+```
+
+### Usage Example
+
+When you send a message like:
+```
+"Create author for the History Sci-fi genre for the Authors collection"
+```
+
+The system will:
+1. Generate an author profile using Vertex AI
+2. Save it as "History Sci-fi Author Profile.txt"
+3. Add it to the "Authors" knowledge collection
+4. Display a confirmation message: "✅ Saved to Authors collection"
+
+### Implementation Details
+
+- **Location**: `vertex-adapter/src/services/knowledgebase.js`
+- **Integration Point**: Chat completions endpoint (both streaming and non-streaming)
+- **Error Handling**: Graceful fallback if knowledge base operations fail
+- **Collection Management**: Automatically finds existing collections or uses the first available one
 
 ## Resources
 
