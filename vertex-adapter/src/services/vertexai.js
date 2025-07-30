@@ -71,13 +71,14 @@ class VertexAIService {
   // Convert OpenAI chat completion request to Vertex AI
   async chatCompletion(openaiRequest) {
     try {
-      const { messages, stream = false, ...otherParams } = openaiRequest;
+      const { messages, stream = false, model, ...otherParams } = openaiRequest;
       
       // Convert messages to Vertex AI format
       const vertexMessages = this.convertMessages(messages);
       
-      // Create chat session
-      const chat = this.model.startChat({
+      // Get the appropriate model and chat session
+      const { modelInstance, modelId } = this.getModelForRequest(model);
+      const chat = modelInstance.startChat({
         history: vertexMessages.slice(0, -1) // All but the last message
       });
 
@@ -85,9 +86,9 @@ class VertexAIService {
       const latestMessage = vertexMessages[vertexMessages.length - 1];
       
       if (stream) {
-        return await this.streamResponse(chat, latestMessage.parts[0].text);
+        return await this.streamResponse(chat, latestMessage.parts[0].text, modelId);
       } else {
-        return await this.generateResponse(chat, latestMessage.parts[0].text);
+        return await this.generateResponse(chat, latestMessage.parts[0].text, modelId);
       }
     } catch (error) {
       global.logger?.error('Vertex AI chat completion error:', error);
@@ -95,8 +96,30 @@ class VertexAIService {
     }
   }
 
+  // Get model instance for a request (handles custom models)
+  getModelForRequest(requestedModel) {
+    // If no model specified, use default
+    if (!requestedModel) {
+      return { modelInstance: this.model, modelId: this.modelId };
+    }
+
+    // If it's our default model, use the existing instance
+    if (requestedModel === this.modelId) {
+      return { modelInstance: this.model, modelId: this.modelId };
+    }
+
+    // For custom models, we'll use the default Vertex AI model but apply custom prompting
+    // This allows Open WebUI's custom models to work through prompt engineering
+    global.logger?.info('Using custom model with default Vertex AI backend', { 
+      requestedModel, 
+      backendModel: this.modelId 
+    });
+    
+    return { modelInstance: this.model, modelId: requestedModel };
+  }
+
   // Generate non-streaming response
-  async generateResponse(chat, message) {
+  async generateResponse(chat, message, modelId = this.modelId) {
     const result = await chat.sendMessage(message);
     const response = await result.response;
     
@@ -113,7 +136,7 @@ class VertexAIService {
       id: `chatcmpl-${Date.now()}`,
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: this.modelId,
+      model: modelId,
       choices: [{
         index: 0,
         message: {
@@ -131,7 +154,7 @@ class VertexAIService {
   }
 
   // Generate streaming response
-  async streamResponse(chat, message) {
+  async streamResponse(chat, message, modelId = this.modelId) {
     const result = await chat.sendMessageStream(message);
     
     // Return an async generator that yields processed chunks

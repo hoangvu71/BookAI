@@ -36,7 +36,7 @@ router.post('/completions', async (req, res) => {
       });
 
       try {
-        const streamResult = await vertexAI.chatCompletion({ messages, stream: true, ...otherParams });
+        const streamResult = await vertexAI.chatCompletion({ messages, stream: true, model, ...otherParams });
         
         let fullContent = '';
         for await (const chunk of streamResult) {
@@ -48,7 +48,7 @@ router.post('/completions', async (req, res) => {
             id: `chatcmpl-${Date.now()}`,
             object: 'chat.completion.chunk',
             created: Math.floor(Date.now() / 1000),
-            model: vertexAI.modelId,
+            model: model || vertexAI.modelId,
             choices: [{
               index: 0,
               delta: {
@@ -66,7 +66,7 @@ router.post('/completions', async (req, res) => {
           id: `chatcmpl-${Date.now()}`,
           object: 'chat.completion.chunk',
           created: Math.floor(Date.now() / 1000),
-          model: vertexAI.modelId,
+          model: model || vertexAI.modelId,
           choices: [{
             index: 0,
             delta: {},
@@ -98,7 +98,7 @@ router.post('/completions', async (req, res) => {
 
     } else {
       // Handle non-streaming response
-      const result = await vertexAI.chatCompletion({ messages, stream: false, ...otherParams });
+      const result = await vertexAI.chatCompletion({ messages, stream: false, model, ...otherParams });
       
       global.logger?.info('Chat completion successful', {
         responseLength: result.choices[0]?.message?.content?.length || 0

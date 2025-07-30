@@ -36,7 +36,8 @@
       "Bash(docker-compose:*)",
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
-      "Bash(gh issue close:*)"
+      "Bash(gh issue close:*)",
+      "Bash(git remote:*)"
     ],
     "deny": []
   }

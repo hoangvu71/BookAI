@@ -32,16 +32,36 @@ router.get('/:modelId', (req, res) => {
     global.logger?.info('Model details requested', { modelId });
     
     const models = vertexAI.getModels();
-    const model = models.data.find(m => m.id === modelId);
+    let model = models.data.find(m => m.id === modelId);
     
+    // If model not found in our list, create a custom model entry
+    // This supports Open WebUI's custom models feature
     if (!model) {
-      return res.status(404).json({
-        error: {
-          message: `Model '${modelId}' not found`,
-          type: 'invalid_request_error',
-          code: 'model_not_found'
-        }
-      });
+      global.logger?.info('Creating custom model entry', { modelId });
+      model = {
+        id: modelId,
+        object: 'model',
+        created: Math.floor(Date.now() / 1000),
+        owned_by: 'custom',
+        root: modelId,
+        parent: null,
+        permission: [
+          {
+            id: 'modelperm-' + modelId,
+            object: 'model_permission',
+            created: Math.floor(Date.now() / 1000),
+            allow_create_engine: false,
+            allow_sampling: true,
+            allow_logprobs: false,
+            allow_search_indices: false,
+            allow_view: true,
+            allow_fine_tuning: false,
+            organization: '*',
+            group: null,
+            is_blocking: false
+          }
+        ]
+      };
     }
     
     res.json(model);
