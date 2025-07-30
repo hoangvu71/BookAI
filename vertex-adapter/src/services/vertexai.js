@@ -100,6 +100,15 @@ class VertexAIService {
     const result = await chat.sendMessage(message);
     const response = await result.response;
     
+    // Extract text from response candidates
+    let content = '';
+    if (response.candidates && response.candidates[0] && response.candidates[0].content) {
+      const responseContent = response.candidates[0].content;
+      if (responseContent.parts && responseContent.parts.length > 0) {
+        content = responseContent.parts.map(part => part.text || '').join('');
+      }
+    }
+    
     return {
       id: `chatcmpl-${Date.now()}`,
       object: 'chat.completion',
@@ -109,7 +118,7 @@ class VertexAIService {
         index: 0,
         message: {
           role: 'assistant',
-          content: response.text()
+          content: content
         },
         finish_reason: 'stop'
       }],
@@ -124,7 +133,24 @@ class VertexAIService {
   // Generate streaming response
   async streamResponse(chat, message) {
     const result = await chat.sendMessageStream(message);
-    return result.stream;
+    
+    // Return an async generator that yields processed chunks
+    async function* processStream() {
+      for await (const chunk of result.stream) {
+        // The chunk should have a candidates array with content
+        if (chunk.candidates && chunk.candidates[0] && chunk.candidates[0].content) {
+          const content = chunk.candidates[0].content;
+          if (content.parts && content.parts.length > 0) {
+            const text = content.parts.map(part => part.text || '').join('');
+            if (text) {
+              yield { text: () => text };
+            }
+          }
+        }
+      }
+    }
+    
+    return processStream();
   }
 
   // Get available models

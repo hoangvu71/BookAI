@@ -27,7 +27,16 @@
       "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" issue close 2)",
       "Bash(node:*)",
       "Bash(rm:*)",
-      "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" issue list --state open)"
+      "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" issue list --state open)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(docker-compose:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue close:*)"
     ],
     "deny": []
   }
