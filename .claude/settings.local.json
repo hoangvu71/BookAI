@@ -37,7 +37,9 @@
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
       "Bash(gh issue close:*)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)"
     ],
     "deny": []
   }

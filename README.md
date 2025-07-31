@@ -1,31 +1,32 @@
-# BookAI - Open WebUI with Google Vertex AI
+# BookAI - Open WebUI with OpenRouter
 
-**Production-ready AI chat interface powered by Google Vertex AI and Open WebUI** ✨
+**Production-ready AI chat interface powered by OpenRouter and Open WebUI** ✨
 
-BookAI provides a self-hosted AI chat interface using Open WebUI connected to Google Vertex AI (Gemini 2.0 Flash) through a custom OpenAI-compatible adapter.
+BookAI provides a self-hosted AI chat interface using Open WebUI connected to OpenRouter, giving you access to multiple AI models through a single API.
 
 ## 🚀 Features
 
-- **✅ Full Chat Functionality** - Both streaming and non-streaming responses working
+- **✅ Multiple AI Models** - Access to GPT-4, Claude, Gemini, Llama, and more through OpenRouter
 - **🤖 Modern Interface** - Open WebUI's polished chat experience
-- **🔒 Privacy-First** - Self-hosted with your own Google Cloud credentials
-- **⚡ High Performance** - Gemini 2.0 Flash model with optimized adapter
+- **🔒 Privacy-First** - Self-hosted interface with your own API credentials
+- **⚡ High Performance** - Direct integration with OpenRouter's optimized API
 - **📱 Mobile Ready** - Progressive Web App support
 - **🌐 Multi-language** - International interface support
+- **💾 RAG Support** - Built-in document chat and knowledge base features
 
 ## 🏗️ Architecture
 
 ```
-Open WebUI (Port 3000) → Vertex AI Adapter (Port 8000) → Google Vertex AI
+Open WebUI (Port 3000) → OpenRouter API → Multiple AI Providers
 ```
 
-The adapter translates OpenAI API calls to Vertex AI format, enabling seamless integration.
+Direct integration with OpenRouter's OpenAI-compatible API enables access to multiple AI models.
 
 ## 📋 Prerequisites
 
 - **Docker & Docker Compose** - For containerized deployment
-- **Google Cloud Project** - With Vertex AI API enabled
-- **Service Account** - With Vertex AI User permissions
+- **OpenRouter Account** - Sign up at [openrouter.ai](https://openrouter.ai)
+- **OpenRouter API Key** - Generate from your OpenRouter dashboard
 
 ## ⚡ Quick Start
 

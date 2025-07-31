@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Open WebUI - Using official image
+  # Open WebUI with OpenRouter Integration
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: bookai-webui
@@ -10,11 +10,12 @@ services:
     volumes:
       - open-webui-data:/app/backend/data
     environment:
-      # Connect to our Vertex AI adapter instead of OpenAI
-      - OPENAI_API_BASE_URL=http://vertex-adapter:8000/v1
-      - OPENAI_API_KEY=dummy-key-for-vertex
+      # OpenRouter Configuration
+      - ENABLE_OPENAI_API=true
+      - OPENAI_API_BASE_URL=https://openrouter.ai/api/v1
+      - OPENAI_API_KEY=${OPENROUTER_API_KEY}
       
-      # Open WebUI configuration
+      # Open WebUI Configuration
       - WEBUI_NAME=BookAI
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-here}
       - ENABLE_SIGNUP=${ENABLE_SIGNUP:-true}
@@ -25,35 +26,7 @@ services:
       # Optional features
       - ENABLE_RAG=${ENABLE_RAG:-true}
       - ENABLE_WEB_SEARCH=${ENABLE_WEB_SEARCH:-false}
-    depends_on:
-      - vertex-adapter
     restart: unless-stopped
-    networks:
-      - bookai-network
-
-  # Vertex AI Adapter - Our custom service
-  vertex-adapter:
-    build: ./vertex-adapter
-    container_name: bookai-vertex-adapter
-    ports:
-      - "8000:8000"  # Expose for debugging, not needed in production
-    volumes:
-      - ./config:/app/config:ro
-    environment:
-      # Google Cloud Configuration
-      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
-      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION}
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/${GOOGLE_APPLICATION_CREDENTIALS}
-      
-      # Model Configuration
-      - AI_MODEL=${AI_MODEL:-gemini-2.0-flash-exp}
-      
-      # Adapter Configuration
-      - PORT=8000
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-    restart: unless-stopped
-    networks:
-      - bookai-network
 
   # Optional: PostgreSQL for Open WebUI (instead of SQLite)
   # Uncomment if you want to use PostgreSQL
@@ -72,7 +45,3 @@ services:
 volumes:
   open-webui-data:
   # postgres-data:  # Uncomment if using PostgreSQL
-
-networks:
-  bookai-network:
-    driver: bridge
