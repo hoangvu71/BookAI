@@ -48,6 +48,9 @@ services:
       # Model Configuration
       - AI_MODEL=${AI_MODEL:-gemini-2.0-flash-exp}
       
+      # Google API Key for intelligent routing (optional but recommended)
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      
       # Adapter Configuration
       - PORT=8000
       - LOG_LEVEL=${LOG_LEVEL:-info}

@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "bookai-adk-service"
+version = "0.1.0"
+description = "BookAI ADK Agent Orchestrator Service"
+authors = ["BookAI Team <team@bookai.dev>"]
+readme = "README.md"
+packages = [{include = "bookai_adk", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.104.1"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+pydantic = "^2.5.0"
+google-cloud-aiplatform = "^1.38.0"
+google-generativeai = "^0.3.2"
+structlog = "^23.2.0"
+prometheus-client = "^0.19.0"
+httpx = "^0.25.2"
+python-multipart = "^0.0.6"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+black = "^23.11.0"
+isort = "^5.12.0"
+mypy = "^1.7.1"
+ruff = "^0.1.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = ["E", "F", "W", "C", "N"]

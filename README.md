@@ -1,25 +1,36 @@
-# BookAI - Open WebUI with Google Vertex AI
+# BookAI - Multi-Agent AI Orchestrator with Open WebUI
 
-**Production-ready AI chat interface powered by Google Vertex AI and Open WebUI** ✨
+**Production-ready multi-agent AI system with intelligent routing powered by Google Vertex AI** ✨
 
-BookAI provides a self-hosted AI chat interface using Open WebUI connected to Google Vertex AI (Gemini 2.0 Flash) through a custom OpenAI-compatible adapter.
+BookAI provides a self-hosted AI chat interface using Open WebUI connected to multiple specialized AI agents through an intelligent orchestration layer that automatically routes queries to the most appropriate expert agent.
 
 ## 🚀 Features
 
-- **✅ Full Chat Functionality** - Both streaming and non-streaming responses working
-- **🤖 Modern Interface** - Open WebUI's polished chat experience
+- **🧠 Intelligent Multi-Agent System** - Automatically routes queries to specialized agents
+- **🎯 Domain Expertise** - Dedicated agents for finance, coding, and more domains
+- **🔀 Multi-Domain Support** - Handles queries spanning multiple domains with combined responses
+- **✅ Full Chat Functionality** - Both streaming and non-streaming responses
+- **🤖 Vertex AI Powered** - Uses Gemini models for both routing and agent responses
 - **🔒 Privacy-First** - Self-hosted with your own Google Cloud credentials
-- **⚡ High Performance** - Gemini 2.0 Flash model with optimized adapter
+- **⚡ High Performance** - Optimized routing with fallback mechanisms
 - **📱 Mobile Ready** - Progressive Web App support
 - **🌐 Multi-language** - International interface support
 
 ## 🏗️ Architecture
 
 ```
-Open WebUI (Port 3000) → Vertex AI Adapter (Port 8000) → Google Vertex AI
+Open WebUI (Port 3000) 
+    ↓
+Orchestrator with LLM Router (Port 8000)
+    ↓
+┌─────────────┬─────────────┬──────────────┐
+│FinanceAgent│ CodeAgent   │ Future Agents│
+└─────────────┴─────────────┴──────────────┘
+    ↓
+Google Vertex AI (Gemini Models)
 ```
 
-The adapter translates OpenAI API calls to Vertex AI format, enabling seamless integration.
+The orchestrator uses intelligent routing to direct queries to specialized agents based on content analysis.
 
 ## 📋 Prerequisites
 
@@ -67,6 +78,20 @@ docker-compose up -d
 - **Main Interface**: http://localhost:3000
 - **API Health Check**: http://localhost:8000/health
 
+## 🎯 Usage Examples
+
+### Multi-Domain Query
+When you ask "How do I build a Python trading bot?", the system:
+1. Detects this spans both coding and finance domains
+2. Routes to both CodeAgent and FinanceAgent
+3. Combines responses to provide technical implementation + financial considerations
+
+### Direct Agent Access
+You can also select specific agents in Open WebUI:
+- Choose `finance-agent` for dedicated financial advice
+- Choose `code-agent` for programming help
+- Choose `bookai-general` for intelligent routing
+
 ## ✅ Verification
 
 Test the setup with these curl commands:
@@ -102,10 +127,15 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 | `WEBUI_SECRET_KEY` | Open WebUI secret key | `bookai-secret-key-2025` |
 | `ENABLE_RAG` | Enable document chat | `true` |
 
-### Available Models
-- `gemini-2.0-flash-exp` - Latest experimental model (recommended)
-- `gemini-1.5-pro` - Production stable model
-- `gemini-1.5-flash` - Fast, efficient model
+### Available Models in Open WebUI
+- `bookai-general` - Intelligent orchestrator that routes to appropriate agents
+- `finance-agent` - Direct access to financial advisor agent
+- `code-agent` - Direct access to programming assistant agent
+
+### Available Agents
+- **FinanceAgent** - Specializes in investment advice, portfolio management, retirement planning
+- **CodeAgent** - Specializes in programming, algorithms, debugging, and software architecture
+- More agents can be easily added by extending the base agent class
 
 ## 🛠️ Troubleshooting
 

@@ -37,7 +37,13 @@
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
       "Bash(gh issue close:*)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:google.github.io)",
+      "WebFetch(domain:cloud.google.com)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(poetry install:*)"
     ],
     "deny": []
   }
