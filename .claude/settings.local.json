@@ -39,7 +39,8 @@
       "Bash(gh issue close:*)",
       "Bash(git remote:*)",
       "Bash(docker stop:*)",
-      "Bash(docker rm:*)"
+      "Bash(docker rm:*)",
+      "WebFetch(domain:openwebui.com)"
     ],
     "deny": []
   }

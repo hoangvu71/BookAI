@@ -1,8 +1,8 @@
-# BookAI Architecture - Open WebUI with Vertex AI
+# BookAI Architecture - Open WebUI with OpenRouter
 
 ## Overview
 
-BookAI is a **production-ready** self-hosted AI chat interface that connects Open WebUI to Google Vertex AI through a custom OpenAI-compatible adapter. This architecture enables full access to Gemini 2.0 Flash capabilities while maintaining the familiar OpenAI API interface.
+BookAI is a **production-ready** self-hosted AI chat interface that connects Open WebUI directly to OpenRouter, providing access to multiple AI models through a single unified API. This architecture enables access to GPT-4, Claude, Gemini, Llama, and many other models while maintaining simplicity and cost efficiency.
 
 ## System Architecture
 
@@ -15,27 +15,28 @@ BookAI is a **production-ready** self-hosted AI chat interface that connects Ope
 │   • Multi-user management                  │
 │   • PWA mobile support                     │
 └──────────────────┬──────────────────────────┘
-                   │ HTTP/WebSocket
+                   │ HTTPS
                    │ OpenAI API Format
                    ▼
 ┌─────────────────────────────────────────────┐
-│        🔀 Translation Layer                 │
-│      Vertex AI Adapter (Port 8000)         │
-│   • OpenAI → Vertex AI translation         │
-│   • Streaming & non-streaming support      │
-│   • Error handling & mapping               │
-│   • Authentication bridge                  │
+│         🌐 API Gateway                      │
+│           OpenRouter API                    │
+│   • Model routing & load balancing         │
+│   • Usage tracking & billing               │
+│   • Rate limiting & optimization           │
+│   • Provider abstraction                   │
 └──────────────────┬──────────────────────────┘
                    │ HTTPS
-                   │ Vertex AI REST API
+                   │ Provider-specific APIs
                    ▼
 ┌─────────────────────────────────────────────┐
-│         🧠 AI Processing                    │
-│      Google Vertex AI Platform             │
-│   • Gemini 2.0 Flash Experimental          │
-│   • Advanced reasoning capabilities        │
-│   • Multimodal support                     │
-│   • Production-grade scaling               │
+│         🧠 AI Model Providers               │
+│  OpenAI • Anthropic • Google • Meta • More │
+│   • GPT-4, GPT-3.5                         │
+│   • Claude 3.5 Sonnet, Haiku               │
+│   • Gemini 1.5 Pro, Flash                  │
+│   • Llama 3.1, 3.2                         │
+│   • Many other models                      │
 └─────────────────────────────────────────────┘
 ```
 
@@ -46,11 +47,12 @@ BookAI is a **production-ready** self-hosted AI chat interface that connects Ope
 | Component | Status | Details |
 |-----------|--------|---------|
 | **Open WebUI** | ✅ **Production** | Official Docker image, fully configured |
-| **Vertex AI Adapter** | ✅ **Production** | Custom Node.js service, tested & verified |
-| **Authentication** | ✅ **Secure** | Service account key properly configured |
+| **OpenRouter API** | ✅ **Production** | Direct OpenAI-compatible integration |
+| **Authentication** | ✅ **Secure** | OpenRouter API key properly configured |
+| **Multiple Models** | ✅ **Working** | Access to 20+ AI models from different providers |
 | **Streaming Chat** | ✅ **Working** | Real-time responses with proper SSE format |
-| **Non-streaming** | ✅ **Working** | Standard request/response pattern |
-| **Error Handling** | ✅ **Robust** | Proper error mapping and user feedback |
+| **RAG Support** | ✅ **Working** | Document chat with knowledge files |
+| **Error Handling** | ✅ **Robust** | Proper error handling through OpenRouter |
 
 ### 🏗️ Implementation Details
 
@@ -58,143 +60,135 @@ BookAI is a **production-ready** self-hosted AI chat interface that connects Ope
 - **Image**: `ghcr.io/open-webui/open-webui:main`
 - **Port**: 3000 (web interface)
 - **Features**: All Open WebUI capabilities enabled
-- **Configuration**: Points to our custom adapter endpoint
+- **Configuration**: Direct OpenRouter API integration
 
-#### **2. Vertex AI Adapter Service**
-- **Language**: Node.js with Express
-- **Port**: 8000 (API endpoint)
-- **Endpoints Implemented**:
+#### **2. OpenRouter Integration**
+- **API Endpoint**: `https://openrouter.ai/api/v1`
+- **Protocol**: OpenAI-compatible REST API
+- **Authentication**: API key authentication
+- **Features**:
   ```
-  ✅ GET  /health              - Service health check
-  ✅ GET  /v1/models           - Available models list
-  ✅ POST /v1/chat/completions - Chat functionality (streaming + non-streaming)
+  ✅ Access to 20+ models     - GPT-4, Claude, Gemini, Llama, etc.
+  ✅ Streaming responses      - Real-time chat experience
+  ✅ Pay-per-use pricing     - Cost-effective multi-model access
+  ✅ Model switching         - Easy provider comparison
   ```
 
-#### **3. Google Cloud Integration**
-- **Authentication**: Service account key (`config/service-account-key.json`)
-- **Project**: `writing-book-457206`
-- **Location**: `us-central1`
-- **Model**: `gemini-2.0-flash-exp`
+#### **3. Simplified Architecture**
+- **No custom backend needed** - Direct API integration
+- **Single container deployment** - Just Open WebUI
+- **Minimal configuration** - Environment variables only
 
 ### 🔧 Configuration Details
 
-#### **Open WebUI Environment**
+#### **Environment Variables (.env)**
 ```bash
-OPENAI_API_BASE_URL=http://vertex-adapter:8000/v1
-OPENAI_API_KEY=vertex-ai-dummy-key
-WEBUI_NAME=BookAI
-ENABLE_RAG=true
+# OpenRouter Configuration
+OPENROUTER_API_KEY=your-openrouter-api-key
+
+# Open WebUI Configuration  
+WEBUI_SECRET_KEY=your-secret-key
 ENABLE_SIGNUP=true
+ENABLE_RAG=true
+ENABLE_WEB_SEARCH=false
+LOG_LEVEL=info
 ```
 
-#### **Vertex Adapter Environment**
+#### **Docker Compose Environment**
 ```bash
-GOOGLE_CLOUD_PROJECT=writing-book-457206
-GOOGLE_CLOUD_LOCATION=us-central1
-GOOGLE_APPLICATION_CREDENTIALS=/app/config/service-account-key.json
-AI_MODEL=gemini-2.0-flash-exp
-PORT=8000
-LOG_LEVEL=info
+# OpenRouter Integration
+ENABLE_OPENAI_API=true
+OPENAI_API_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_API_KEY=${OPENROUTER_API_KEY}
+
+# Open WebUI Settings
+WEBUI_NAME=BookAI
+WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+ENABLE_RAG=true
 ```
 
 ## 🎯 Architecture Benefits
 
-### **1. Minimal Custom Development**
-- Only the adapter layer is custom code (~200 lines)
-- Open WebUI provides the entire frontend experience
-- Reduces development time from months to days
+### **1. Zero Custom Development**
+- No custom backend code required
+- Direct OpenAI-compatible API integration
+- Open WebUI provides the entire experience
+- Maximum simplicity with minimal maintenance
 
-### **2. Production-Grade Features** 
+### **2. Multi-Model Access** 
+- **20+ AI Models**: GPT-4, Claude, Gemini, Llama, and more
+- **Cost Optimization**: Pay-per-use across multiple providers
+- **Easy Comparison**: Switch models instantly to compare responses
+- **Future Models**: Automatic access to new models via OpenRouter
+
+### **3. Production-Grade Features**
 - **Complete UI**: Modern chat interface, dark mode, mobile support
 - **User Management**: Multi-user support with authentication
 - **RAG Support**: Document upload and chat functionality
 - **Extensibility**: Plugin system and custom tools
 
-### **3. Operational Excellence**
-- **Container-Ready**: Full Docker Compose orchestration
-- **Health Monitoring**: Built-in health checks and logging
-- **Error Handling**: Proper error mapping and user feedback
-- **Security**: Service account authentication with proper secret management
-
-### **4. Future-Proof Design**
-- **Model Flexibility**: Easy switching between Gemini models
-- **Provider Agnostic**: Can adapt to other LLM providers
-- **Open WebUI Updates**: Automatic access to new features
-- **Scalable**: Ready for production deployment
+### **4. Operational Excellence**
+- **Single Container**: Minimal deployment complexity
+- **Built-in Features**: Health checks, logging, monitoring
+- **Cost Transparency**: Usage tracking through OpenRouter
+- **High Availability**: OpenRouter handles load balancing and failover
 
 ## 📁 Project Structure
 
 ```
-BookAI/                           # 🏠 Root directory
-├── vertex-adapter/               # 🔀 Custom OpenAI→Vertex AI adapter
-│   ├── src/
-│   │   ├── index.js             # 🚀 Express server & middleware
-│   │   ├── routes/
-│   │   │   ├── chat.js          # 💬 Chat completions endpoint
-│   │   │   └── models.js        # 📋 Models listing endpoint
-│   │   └── services/
-│   │       └── vertexai.js      # 🧠 Vertex AI integration service
-│   ├── Dockerfile               # 🐳 Adapter container definition
-│   ├── package.json             # 📦 Node.js dependencies
-│   └── package-lock.json        # 🔒 Dependency lock file
-├── config/                      # ⚙️ Configuration files
-│   └── service-account-key.json # 🔐 Google Cloud credentials (gitignored)
-├── docker-compose.yml           # 🐳 Service orchestration
-├── .env                         # 🌍 Environment variables
-├── .gitignore                   # 🚫 Version control exclusions
+BookAI/                          # 🏠 Root directory - Clean & Minimal
+├── docker-compose.yml           # 🐳 Single container deployment
+├── .env                         # 🌍 Environment variables (OpenRouter API key)
 ├── README.md                    # 📖 User documentation
 ├── ARCHITECTURE.md              # 🏗️ Technical architecture
-├── CLAUDE.md                    # 💻 Development guidelines
-└── test-adapter.js              # 🧪 Testing utilities
+└── CLAUDE.md                    # 💻 Development guidelines
 ```
+
+**That's it!** No custom code, no complex services, no configuration files.
+Just 5 files for a complete AI chat interface with 20+ models.
 
 ## 🐳 Docker Compose Architecture
 
 ```yaml
-# Complete production setup
+# Complete production setup - Single container!
 services:
-  # Frontend: Open WebUI
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     ports: ["3000:8080"]
     environment:
-      OPENAI_API_BASE_URL: http://vertex-adapter:8000/v1
-      OPENAI_API_KEY: vertex-ai-dummy-key
+      # Direct OpenRouter integration
+      ENABLE_OPENAI_API: true
+      OPENAI_API_BASE_URL: https://openrouter.ai/api/v1
+      OPENAI_API_KEY: ${OPENROUTER_API_KEY}
+      
+      # App configuration
       WEBUI_NAME: BookAI
-    
-  # Backend: Custom Vertex AI Adapter  
-  vertex-adapter:
-    build: ./vertex-adapter
-    ports: ["8000:8000"]
-    environment:
-      GOOGLE_CLOUD_PROJECT: writing-book-457206
-      AI_MODEL: gemini-2.0-flash-exp
+      ENABLE_RAG: true
     volumes:
-      - "./config:/app/config:ro"
+      - open-webui-data:/app/backend/data
 ```
 
 ## 🔄 Data Flow
 
 ### **Chat Request Flow**
 1. **User** sends message via Open WebUI interface
-2. **Open WebUI** makes HTTP POST to `/v1/chat/completions`
-3. **Vertex Adapter** receives OpenAI-format request
-4. **Adapter** translates to Vertex AI format and authenticates
-5. **Vertex AI** processes request using Gemini 2.0 Flash
-6. **Adapter** translates response back to OpenAI format
-7. **Open WebUI** renders streaming response to user
+2. **Open WebUI** makes HTTPS POST to `https://openrouter.ai/api/v1/chat/completions`
+3. **OpenRouter** routes request to appropriate AI provider (OpenAI, Anthropic, Google, etc.)
+4. **AI Provider** processes request using selected model
+5. **OpenRouter** returns response in OpenAI format
+6. **Open WebUI** renders streaming response to user
 
 ### **Model Information Flow**
-1. **Open WebUI** requests available models via `/v1/models`
-2. **Vertex Adapter** returns configured Gemini model info
-3. **Open WebUI** displays model in interface dropdown
+1. **Open WebUI** requests available models via `https://openrouter.ai/api/v1/models`
+2. **OpenRouter** returns complete list of available models from all providers
+3. **Open WebUI** displays all models in interface dropdown
 
 ## 🚀 Deployment Ready
 
 This architecture is **production-ready** with:
-- ✅ **Tested streaming & non-streaming chat**
-- ✅ **Proper error handling & logging**
-- ✅ **Secure credential management**
-- ✅ **Health monitoring endpoints**
-- ✅ **Container orchestration**
-- ✅ **Documentation & troubleshooting guides**
+- ✅ **Zero custom code** - No maintenance overhead
+- ✅ **Multi-model access** - 20+ models from different providers  
+- ✅ **Cost optimization** - Pay only for what you use
+- ✅ **Automatic updates** - New models appear automatically
+- ✅ **High availability** - OpenRouter handles infrastructure
+- ✅ **Simple deployment** - Single container setup
